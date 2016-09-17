@@ -87,9 +87,27 @@ if(NOT RANGE_V3_NO_HEADER_CHECK)
 endif()
 
 add_subdirectory(doc)
-add_subdirectory(test)
-add_subdirectory(example)
-add_subdirectory(perf)
+if(BUILD_TESTING) # quick install if explicitly cleared (-DBUILD_TESTING=OFF)
+  add_subdirectory(test)
+  add_subdirectory(example)
+  add_subdirectory(perf)
+endif()
 
 install(DIRECTORY include/ DESTINATION include
         FILES_MATCHING PATTERN "*.hpp")
+
+# install INTERFACE library targets if CMake >= 3.0
+# Usage:
+#     find_package(range-v3 REQUIRED)
+#     target_link_libraries(mytarget ::range-v3)
+if(NOT CMAKE_VERSION VERSION_LESS 3.0)
+  add_library(meta INTERFACE)
+  target_include_directories(meta INTERFACE $<INSTALL_INTERFACE:include>)
+  add_library(range-v3 INTERFACE)
+  target_include_directories(range-v3 INTERFACE $<INSTALL_INTERFACE:include>)
+  target_link_libraries(range-v3 INTERFACE meta)
+  install(TARGETS meta range-v3 EXPORT range-v3-targets DESTINATION lib)
+  install(EXPORT range-v3-targets FILE range-v3-config.cmake
+    DESTINATION lib/cmake/range-v3
+    NAMESPACE ::)
+endif()
